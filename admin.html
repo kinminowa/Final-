@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Analytics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      display: flex;
+    }
+    /* Sidebar */
+    .sidebar {
+      width: 200px;
+      background: #222;
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .sidebar h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .sidebar a {
+      display: block;
+      color: #fff;
+      padding: 10px;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    .sidebar a:hover {
+      background: #444;
+    }
+    /* Main content */
+    .main {
+      flex: 1;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+    .filter {
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .card h2 {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .card p {
+      font-size: 22px;
+      font-weight: bold;
+      color: #222;
+    }
+    .chart-container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>Admin Menu</h2>
+    <a href="#">Dashboard</a>
+    <a href="#">Products</a>
+    <a href="#">Users</a>
+    <a href="#">Settings</a>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <h1>Admin Analytics Dashboard</h1>
+
+    <!-- Date filter -->
+    <div class="filter">
+      <label for="date">Filter by Date: </label>
+      <input type="date" id="date" />
+      <button onclick="loadAnalytics()">Apply</button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid">
+      <div class="card">
+        <h2>Total Views</h2>
+        <p id="totalViews">0</p>
+      </div>
+      <div class="card">
+        <h2>Add to Cart</h2>
+        <p id="totalCarts">0</p>
+      </div>
+      <div class="card">
+        <h2>Purchases</h2>
+        <p id="totalPurchases">0</p>
+      </div>
+      <div class="card">
+        <h2>Popular Product</h2>
+        <p id="popularProduct">-</p>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-container">
+      <h2>Product Performance</h2>
+      <canvas id="productChart" height="100"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:5000/analytics";
+
+    let chart;
+
+    async function loadAnalytics() {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+
+      // Update cards
+      document.getElementById("totalViews").innerText = data.totalViews;
+      document.getElementById("totalCarts").innerText = data.totalAddToCart;
+      document.getElementById("totalPurchases").innerText = data.totalPurchases;
+      document.getElementById("popularProduct").innerText = data.popularProduct;
+
+      // Update chart
+      const ctx = document.getElementById("productChart").getContext("2d");
+
+      if (chart) {
+        chart.destroy();
+      }
+
+      chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: data.productStats.map(p => p.name),
+          datasets: [
+            { label: "Views", data: data.productStats.map(p => p.views), backgroundColor: "#8884d8" },
+            { label: "Add to Bag", data: data.productStats.map(p => p.addToCart), backgroundColor: "#82ca9d" },
+            { label: "Purchases", data: data.productStats.map(p => p.purchases), backgroundColor: "#ffc658" }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { tooltip: { mode: "index", intersect: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    loadAnalytics();
+  </script>
+</body>
+</html>
